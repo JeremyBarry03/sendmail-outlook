@@ -5,6 +5,15 @@ import os
 import tempfile
 from win32com.client import Dispatch
 
+def create_mail(outlook, to, subject, body, account=None):
+    mail = outlook.CreateItem(0)
+    if account is not None:
+        mail.SendUsingAccount = account
+    mail.To = to
+    mail.Subject = subject
+    mail.Body = body
+    return mail
+
 def create_parser():
     parser = argparse.ArgumentParser(description="Sends an email using Outlook")
     parser.add_argument("-t", "--to", default="", help="Recipient of the email")
@@ -41,15 +50,11 @@ def main():
         dont_send = True
         
     outlook = Dispatch("outlook.application")
-    mail = outlook.CreateItem(0)
-    mail.To = args.to
-    mail.Subject = args.subject
-    
     if not args.body:
         body = sys.stdin.read()
-        mail.Body = body
     else:
-        mail.Body = " ".join(args.body)
+        body = args.body if isinstance(args.body, str) else " ".join(args.body)
+    mail = create_mail(outlook, args.to, args.subject, body)
 
     if args.htmlbody:
         mail.HTMLBody = args.htmlbody
